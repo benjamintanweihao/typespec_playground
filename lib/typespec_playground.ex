@@ -1,5 +1,5 @@
 defmodule TypespecPlayground do
-  
+
   ###############################################
   # The discrepancies that Dialyzer can pick up #
   ###############################################
@@ -42,9 +42,9 @@ defmodule TypespecPlayground do
     1 + x
   end
 
-  ###########################################################
-  #  Getting Dialyzer to show it's inferred success typings #
-  ###########################################################
+  ########################
+  # Helping out Dialyzer #
+  ########################
 
   defmodule List do
 
@@ -138,5 +138,37 @@ defmodule TypespecPlayground do
   #
   # Notice that the first clause is entirely ignored, since it
   # doesn't contibute to the success typing.
+
+  #######################################
+  # Non-returning functions and servers #
+  #######################################
+
+  defmodule SomeServer do
+
+    @spec loop(pid) :: no_return
+    def loop(parent) when is_pid(parent) do
+      receive do
+        {_pid, msg} ->
+          send(parent, msg)
+          loop(parent)
+      end
+    end
+
+    # NOTE: We can make it return something, such as 
+    # adding a :stop. However, this goes against the
+    # grain of "not modifying any existing code"
+    @spec loop_returnable(pid) :: :ok
+    def loop_returnable(parent) when is_pid(parent) do
+      receive do
+        :stop ->
+          :ok
+
+        {_pid, msg} ->
+          send(parent, msg)
+          loop_returnable(parent)
+      end
+    end
+
+  end
 
 end
